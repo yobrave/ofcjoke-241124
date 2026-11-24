@@ -1,32 +1,26 @@
-"""Office-joke entry shipper for the aldy998 office joke open."""
-import json
+"""One office joke, shipped as reply-all evidence."""
 import os
-from pathlib import Path
+
+THREAD = ("I sent a reply-all asking people to stop reply-alling. Forty "
+          "colleagues explained, by reply-all, why theirs didn't count.")
+OFFICE = "oj99"
+WING = "east"
+CC = 40
 
 
-class Shipper:
-    """One-line comedy, 1..200 chars, whitespace-normalised before staging."""
-
-    cap = 200
-
-    def __init__(self, home):
-        self.home = Path(home)
-        self.source = self.home / "entry.txt"
-
-    def load(self):
-        raw = self.source.read_text(encoding="utf-8")
-        line = " ".join(raw.split())
-        if not line or len(line) > self.cap:
-            raise SystemExit(f"gate fail: {len(line)} chars")
-        return line
-
-    def run(self):
-        line = self.load()
-        out = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", str(self.home / "outbox")))
-        out.mkdir(parents=True, exist_ok=True)
-        (out / "entry.txt").write_text(line + "\n", encoding="utf-8")
-        return json.dumps({"path": str(out / "entry.txt"), "chars": len(line)})
+def ship(root):
+    base = root or "output"
+    if not os.path.isdir(base):
+        os.mkdir(base)
+    p = os.path.join(base, "entry.txt")
+    with open(p, "w", encoding="utf-8", newline="\n") as f:
+        f.write(THREAD + "\n")
+    with open(p, encoding="utf-8") as f:
+        body = f.read().strip()
+    assert body == THREAD, "thread tangled"
+    return body
 
 
-if __name__ == "__main__":
-    print(Shipper(Path(__file__).resolve().parent).run())
+line = ship(os.environ.get("MAKEFUN_OUTPUT_DIR"))
+print("%s wing=%s chars=%d ok" % (OFFICE, WING, len(line)))
+print("cc:", CC, "all of them replied")
